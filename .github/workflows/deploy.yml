@@ -50,6 +50,8 @@ jobs:
         source: "docker-compose.yml,tc-backend/Dockerfile,tc-backend/target/*.jar,tc_frontend/Dockerfile,tc_frontend/nginx.conf,tc_frontend/dist/"
         target: "/opt/tc-project"
         strip_components: 0
+        timeout: 120s
+        command_timeout: 30m
 
     # 4. 远程执行命令重启 Docker
     - name: Restart Docker Containers

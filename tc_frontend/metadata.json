@@ -1,0 +1,8 @@
+
+{
+  "name": "Tengchang Precision Machinery System",
+  "description": "A high-end industrial management system and portal for Tengchang Precision Machinery, featuring a minimalist industrial aesthetic, product management, and real-time dashboard analytics.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}

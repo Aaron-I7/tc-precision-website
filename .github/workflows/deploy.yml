@@ -1,0 +1,69 @@
+name: Deploy to Server
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    # 1. 设置 Java 环境并构建后端
+    - name: Set up JDK 17
+      uses: actions/setup-java@v3
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: maven
+    
+    - name: Build Backend
+      working-directory: ./tc-backend
+      run: mvn clean package -DskipTests
+
+    # 2. 设置 Node 环境并构建前端
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: tc_frontend/package-lock.json
+
+    - name: Build Frontend
+      working-directory: ./tc_frontend
+      run: |
+        npm install
+        npm run build
+
+    # 3. 通过 SSH 将构建产物传输到服务器
+    - name: Copy files via SSH
+      uses: appleboy/scp-action@master
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        password: ${{ secrets.PASSWORD }}
+        # 如果使用 Key 登录，取消下面这行的注释，并注释掉 password
+        # key: ${{ secrets.SSH_KEY }}
+        source: "docker-compose.yml,tc-backend/Dockerfile,tc-backend/target/*.jar,tc_frontend/Dockerfile,tc_frontend/nginx.conf,tc_frontend/dist/"
+        target: "/opt/tc-project"
+        strip_components: 0
+
+    # 4. 远程执行命令重启 Docker
+    - name: Restart Docker Containers
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        password: ${{ secrets.PASSWORD }}
+        # key: ${{ secrets.SSH_KEY }}
+        script: |
+          cd /opt/tc-project
+          # 停止旧容器
+          docker compose down
+          # 重新构建并启动 (因为 Dockerfile 依赖传输过来的 jar 和 dist)
+          docker compose up -d --build
+          # 清理虚悬镜像
+          docker image prune -f

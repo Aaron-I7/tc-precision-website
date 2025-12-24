@@ -1,0 +1,67 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tengchang Precision // System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Spline+Sans:wght@300;400;500;600;700;800;900&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              primary: '#d1d5db', // Precision Silver
+              'industrial-grey': '#1a1a1a',
+              'steel-blue': '#4a5568',
+              'paper-white': '#f8f8f5',
+              'surface-light': '#ffffff',
+              'surface-dark': '#2d2c1e',
+            },
+            fontFamily: {
+              display: ['Spline Sans', 'Noto Sans SC', 'sans-serif'],
+              sans: ['Spline Sans', 'Noto Sans SC', 'sans-serif'],
+            },
+            borderRadius: {
+              DEFAULT: '1rem',
+              lg: '1.5rem',
+              xl: '2rem',
+              '2xl': '2.5rem',
+              '3xl': '3rem',
+              full: '9999px',
+            },
+          },
+        },
+      }
+    </script>
+    <style>
+      body {
+        font-family: 'Spline Sans', 'Noto Sans SC', sans-serif;
+        scrollbar-gutter: stable;
+      }
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      .fill-1 {
+        font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+    </style>
+  <link rel="stylesheet" href="/index.css">
+</head>
+  <body class="bg-paper-white dark:bg-zinc-950 text-industrial-grey dark:text-gray-100 antialiased min-h-screen">
+    <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>

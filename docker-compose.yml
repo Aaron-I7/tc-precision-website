@@ -1,0 +1,56 @@
+services:
+  # MySQL 数据库服务
+  mysql:
+    image: mysql:8.0
+    container_name: tc-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root123_please_change_me
+      MYSQL_DATABASE: tc_db
+      TZ: Asia/Shanghai
+    volumes:
+      # 数据持久化，防止重启丢失数据
+      - /opt/tc-project/mysql-data:/var/lib/mysql
+      # 初始化 SQL 脚本 (第一次启动会自动执行)
+      - ./tc-backend/src/main/resources/schema.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - tc-network
+
+  # 后端服务
+  backend:
+    build: 
+      context: ./tc-backend
+      dockerfile: Dockerfile
+    container_name: tc-backend
+    restart: always
+    depends_on:
+      - mysql
+    environment:
+      TZ: Asia/Shanghai
+      # 覆盖 application.yml 中的数据库连接
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/tc_db?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root123_please_change_me
+    volumes:
+      # 图片上传目录挂载
+      - /opt/tc-project/uploads:/app/uploads
+    networks:
+      - tc-network
+
+  # 前端服务 (Nginx)
+  frontend:
+    build:
+      context: ./tc_frontend
+      dockerfile: Dockerfile
+    container_name: tc-frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - tc-network
+
+networks:
+  tc-network:
+    driver: bridge

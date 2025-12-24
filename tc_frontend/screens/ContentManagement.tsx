@@ -167,7 +167,7 @@ const ContentManagement: React.FC = () => {
               <div className="space-y-12">
                 {/* Home Hero */}
                 {homeHero && (
-                  <div className="relative h-[400px] w-full bg-cover bg-center rounded-2xl overflow-hidden group shadow-xl" style={{ backgroundImage: `url('${homeHero.image}')` }}>
+                  <div className="relative h-[400px] w-full bg-cover bg-center rounded-2xl overflow-hidden group shadow-xl" style={{ backgroundImage: `url('${homeHero.image || 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&q=80'}')` }}>
                      <div className="absolute inset-0 bg-black/50 flex flex-col justify-center px-12 text-white">
                         <h2 className="text-5xl font-bold whitespace-pre-wrap">{homeHero.title}</h2>
                         <p className="mt-4 text-xl max-w-2xl">{homeHero.description}</p>
@@ -209,7 +209,7 @@ const ContentManagement: React.FC = () => {
               <div className="space-y-12">
                  {/* About Hero */}
                  {aboutHero && (
-                  <div className="relative h-[300px] w-full bg-cover bg-center rounded-2xl overflow-hidden group shadow-lg" style={{ backgroundImage: `url('${aboutHero.image}')` }}>
+                  <div className="relative h-[300px] w-full bg-cover bg-center rounded-2xl overflow-hidden group shadow-lg" style={{ backgroundImage: `url('${aboutHero.image || 'https://picsum.photos/seed/about_hero/1920/600'}')` }}>
                      <div className="absolute inset-0 bg-black/50 flex flex-col justify-center items-center text-white text-center">
                         <h2 className="text-4xl font-bold">{aboutHero.title}</h2>
                         <p className="mt-4 text-xl">{aboutHero.description}</p>

@@ -96,6 +96,16 @@ INSERT INTO customer_case (title, industry, description, image) VALUES
 ('高端医疗机器人关节模组', '医疗器械', '为手术机器人提供高精度、低间隙的关节模组，确保手术精准度。', 'https://picsum.photos/seed/medrobot/600/450');
 
 
+-- Visit Log
+CREATE TABLE visit_log (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    ip VARCHAR(50),
+    path VARCHAR(255),
+    method VARCHAR(10),
+    user_agent VARCHAR(255),
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
 -- Inquiry (Contact Messages)
 CREATE TABLE inquiry (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,

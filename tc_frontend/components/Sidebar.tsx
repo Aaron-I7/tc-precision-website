@@ -1,10 +1,25 @@
 
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 const Sidebar: React.FC = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const isActive = (path: string) => location.pathname === path;
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      setUser(JSON.parse(userStr));
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    navigate('/login');
+  };
 
   return (
     <aside className="w-[280px] bg-white dark:bg-zinc-900 h-full flex flex-col border-r border-gray-200 dark:border-zinc-800 shrink-0 z-20 shadow-[4px_0_24px_rgba(0,0,0,0.02)] transition-colors">
@@ -49,9 +64,13 @@ const Sidebar: React.FC = () => {
         </Link>
         <div className="my-4 h-px bg-gray-100 dark:bg-zinc-800"></div>
         <Link to="/" className="group flex items-center gap-3.5 px-5 py-3.5 rounded-full text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-all">
-          <span className="material-symbols-outlined">logout</span>
-          <span className="text-sm font-medium">退出后台</span>
+          <span className="material-symbols-outlined">home</span>
+          <span className="text-sm font-medium">返回前台</span>
         </Link>
+        <button onClick={handleLogout} className="group flex items-center gap-3.5 px-5 py-3.5 rounded-full text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-all w-full text-left">
+          <span className="material-symbols-outlined">logout</span>
+          <span className="text-sm font-medium">退出登录</span>
+        </button>
       </nav>
 
       <div className="p-4 mt-auto border-t border-gray-100 dark:border-zinc-800">
@@ -64,8 +83,8 @@ const Sidebar: React.FC = () => {
             />
           </div>
           <div className="flex flex-col flex-1 min-w-0">
-            <p className="text-sm font-bold truncate">系统管理员</p>
-            <p className="text-xs text-gray-500 truncate font-mono">ID: 882103</p>
+            <p className="text-sm font-bold truncate">{user?.username || '系统管理员'}</p>
+            <p className="text-xs text-gray-500 truncate font-mono">ID: {user?.id || '---'}</p>
           </div>
           <span className="material-symbols-outlined text-gray-400">unfold_more</span>
         </div>

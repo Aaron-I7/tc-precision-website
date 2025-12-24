@@ -11,10 +11,11 @@ import Dashboard from './screens/Dashboard';
 import Inventory from './screens/Inventory';
 import ContactManagement from './screens/ContactManagement';
 import ContentManagement from './screens/ContentManagement';
-import Guidelines from './screens/Guidelines';
+import Login from './screens/Login';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import Sidebar from './components/Sidebar';
+import ProtectedRoute from './components/ProtectedRoute';
 
 // Scroll to top on route change
 const ScrollToTop = () => {
@@ -40,13 +41,14 @@ const App: React.FC = () => {
           <Route path="/product/:id" element={<PublicLayout><ProductDetail /></PublicLayout>} />
           <Route path="/contact" element={<PublicLayout><Contact /></PublicLayout>} />
           <Route path="/cases" element={<PublicLayout><Cases /></PublicLayout>} />
-          <Route path="/guidelines" element={<PublicLayout><Guidelines /></PublicLayout>} />
+          
+          <Route path="/login" element={<Login />} />
 
           {/* Admin Routes */}
-          <Route path="/admin" element={<AdminLayout><Dashboard /></AdminLayout>} />
-          <Route path="/admin/inventory" element={<AdminLayout><Inventory /></AdminLayout>} />
-          <Route path="/admin/contacts" element={<AdminLayout><ContactManagement /></AdminLayout>} />
-          <Route path="/admin/content" element={<AdminLayout><ContentManagement /></AdminLayout>} />
+          <Route path="/admin" element={<ProtectedRoute><AdminLayout><Dashboard /></AdminLayout></ProtectedRoute>} />
+          <Route path="/admin/inventory" element={<ProtectedRoute><AdminLayout><Inventory /></AdminLayout></ProtectedRoute>} />
+          <Route path="/admin/contacts" element={<ProtectedRoute><AdminLayout><ContactManagement /></AdminLayout></ProtectedRoute>} />
+          <Route path="/admin/content" element={<ProtectedRoute><AdminLayout><ContentManagement /></AdminLayout></ProtectedRoute>} />
 
           {/* Catch all */}
           <Route path="*" element={<Navigate to="/" replace />} />

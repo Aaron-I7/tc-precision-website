@@ -1,13 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { getContentBySection, ContentItem } from '../api/content';
+import ThemeToggle from './ThemeToggle';
 
 const Header: React.FC = () => {
   const location = useLocation();
   const isActive = (path: string) => location.pathname === path;
   const [config, setConfig] = useState<ContentItem | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
+    const token = localStorage.getItem('token');
+    setIsLoggedIn(!!token);
+
     getContentBySection('global_config').then(res => {
       if (res && res.length > 0) {
         setConfig(res[0]);
@@ -33,13 +38,15 @@ const Header: React.FC = () => {
           <Link to="/products" className={`text-sm font-medium transition-colors ${isActive('/products') ? 'text-industrial-grey' : 'text-steel-blue hover:text-industrial-grey'}`}>产品中心</Link>
           <Link to="/cases" className={`text-sm font-medium transition-colors ${isActive('/cases') ? 'text-industrial-grey' : 'text-steel-blue hover:text-industrial-grey'}`}>客户案例</Link>
           <Link to="/contact" className={`text-sm font-medium transition-colors ${isActive('/contact') ? 'text-industrial-grey' : 'text-steel-blue hover:text-industrial-grey'}`}>联系方式</Link>
-          <Link to="/guidelines" className={`text-sm font-medium transition-colors ${isActive('/guidelines') ? 'text-industrial-grey' : 'text-steel-blue hover:text-industrial-grey'}`}>视觉规范</Link>
         </nav>
 
         <div className="flex items-center gap-4">
-          <Link to="/admin" className="hidden sm:flex items-center justify-center h-10 px-6 bg-industrial-grey text-white rounded-full text-sm font-bold hover:bg-zinc-800 transition-colors">
-            后台管理
-          </Link>
+          <ThemeToggle />
+          {isLoggedIn && (
+            <Link to="/admin" className="hidden sm:flex items-center justify-center h-10 px-6 bg-industrial-grey text-white rounded-full text-sm font-bold hover:bg-zinc-800 transition-colors">
+              后台管理
+            </Link>
+          )}
           <button className="md:hidden">
             <span className="material-symbols-outlined">menu</span>
           </button>

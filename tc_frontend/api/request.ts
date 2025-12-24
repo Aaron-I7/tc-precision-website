@@ -7,6 +7,23 @@ const request = axios.create({
   timeout: 5000,
 });
 
+request.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      // Satoken default header name is 'satoken', but standard is Authorization
+      // Backend sa-token config usually accepts both or configured one.
+      // Let's assume standard Bearer token or just the token value if configured that way.
+      // Based on typical sa-token usage:
+      config.headers['satoken'] = token; 
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
 request.interceptors.response.use(
   (response) => {
     const res = response.data;
@@ -19,6 +36,11 @@ request.interceptors.response.use(
   },
   (error) => {
     console.error('Request Error:', error);
+    if (error.response && error.response.status === 401) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/#/login';
+    }
     return Promise.reject(error);
   }
 );

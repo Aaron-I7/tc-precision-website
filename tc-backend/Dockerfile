@@ -1,16 +1,36 @@
-# 使用 OpenJDK 17 作为基础镜像
-FROM openjdk:17-jdk-slim
-
-# 设置工作目录
+# --- 构建阶段 ---
+FROM maven:3.9-eclipse-temurin-17 AS build
 WORKDIR /app
 
-# 复制编译好的 jar 包到容器中
-# 注意：这里假设 GitHub Actions 已经编译好了 jar 包并传到了同级目录
-COPY target/*.jar app.jar
+# 1. 优化依赖缓存：先只复制 pom.xml 下载依赖
+COPY pom.xml .
+# 配置阿里云 Maven 镜像加速 (可选，为了国内服务器构建速度)
+RUN echo '<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0" \
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" \
+    xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 https://maven.apache.org/xsd/settings-1.0.0.xsd"> \
+    <mirrors> \
+        <mirror> \
+            <id>aliyunmaven</id> \
+            <mirrorOf>*</mirrorOf> \
+            <name>阿里云公共仓库</name> \
+            <url>https://maven.aliyun.com/repository/public</url> \
+        </mirror> \
+    </mirrors> \
+</settings>' > /usr/share/maven/conf/settings.xml
 
-# 暴露端口
+# 下载依赖 (利用 Docker 缓存)
+RUN mvn dependency:go-offline -B
+
+# 2. 复制源码并构建
+COPY src ./src
+RUN mvn clean package -DskipTests
+
+# --- 运行阶段 ---
+FROM openjdk:17-jdk-slim
+WORKDIR /app
+
+# 从构建阶段复制 jar 包
+COPY --from=build /app/target/*.jar app.jar
+
 EXPOSE 8080
-
-# 启动命令
-# 增加 JVM 参数以适应容器环境
-ENTRYPOINT ["java", "-jar", "/app/app.jar", "--spring.profiles.active=prod"]
+ENTRYPOINT ["java", "-jar", "app.jar", "--spring.profiles.active=prod"]

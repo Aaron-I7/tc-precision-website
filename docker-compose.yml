@@ -12,6 +12,8 @@ services:
       TZ: Asia/Shanghai
       # 强制客户端连接编码 (对 docker-entrypoint-initdb.d 脚本生效)
       LANG: C.UTF-8
+    ports:
+      - "3306:3306"
     volumes:
       # 数据持久化，防止重启丢失数据
       # 修改路径以强制触发新环境的初始化 (v3)

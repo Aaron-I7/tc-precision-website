@@ -29,7 +29,9 @@ services:
     environment:
       TZ: Asia/Shanghai
       # 覆盖 application.yml 中的数据库连接
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/tc_db?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai
+      # 注意：在 application.yml 中是 spring.datasource.url，环境变量通常大写并用下划线代替点
+      # Spring Boot 的宽松绑定规则：SPRING_DATASOURCE_URL
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/tc_db?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: root123_please_change_me
     volumes:

@@ -4,14 +4,18 @@ services:
     image: mysql:8.0
     container_name: tc-mysql
     restart: always
+    # 强制设置 MySQL 服务端编码为 utf8mb4，防止初始化脚本中文乱码
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     environment:
       MYSQL_ROOT_PASSWORD: root123_please_change_me
       MYSQL_DATABASE: tc_db
       TZ: Asia/Shanghai
+      # 强制客户端连接编码 (对 docker-entrypoint-initdb.d 脚本生效)
+      LANG: C.UTF-8
     volumes:
       # 数据持久化，防止重启丢失数据
-      # 修改路径以强制触发新环境的初始化
-      - /opt/tc-project/mysql-data-v2:/var/lib/mysql
+      # 修改路径以强制触发新环境的初始化 (v3)
+      - /opt/tc-project/mysql-data-v3:/var/lib/mysql
       # 初始化 SQL 脚本 (第一次启动会自动执行)
       - ./tc-backend/src/main/resources/schema.sql:/docker-entrypoint-initdb.d/init.sql
     networks:

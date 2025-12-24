@@ -10,7 +10,8 @@ services:
       TZ: Asia/Shanghai
     volumes:
       # 数据持久化，防止重启丢失数据
-      - /opt/tc-project/mysql-data:/var/lib/mysql
+      # 修改路径以强制触发新环境的初始化
+      - /opt/tc-project/mysql-data-v1:/var/lib/mysql
       # 初始化 SQL 脚本 (第一次启动会自动执行)
       - ./tc-backend/src/main/resources/schema.sql:/docker-entrypoint-initdb.d/init.sql
     networks:

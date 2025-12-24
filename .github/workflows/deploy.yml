@@ -16,13 +16,13 @@ jobs:
     # 我们改用“传输源码，在服务器构建”的策略，以解决大文件 SCP 传输失败的问题
     - name: Tar source code
       run: |
-        tar -czf deploy.tar.gz \
+        tar -czf /tmp/deploy.tar.gz \
           --exclude='.git' \
-          --exclude='deploy.tar.gz' \
           --exclude='tc-backend/target' \
           --exclude='tc_frontend/node_modules' \
           --exclude='tc_frontend/dist' \
           .
+        mv /tmp/deploy.tar.gz .
 
     # 2. 传输源码压缩包到服务器
     - name: Copy source via SSH

@@ -67,13 +67,16 @@ CREATE TABLE content_item (
     icon VARCHAR(50),
     image VARCHAR(255),
     sort_order INT DEFAULT 0
-);
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 INSERT INTO content_item (section, title, description, icon, sort_order) VALUES
 ('home_advantage', '精密制造', '引进德国进口加工中心，精度达到微米级。无论是复杂曲面还是微小孔径，都能精准把控。', 'straighten', 1),
 ('home_advantage', '品质保障', '通过ISO9001认证。从原材料入库到成品出厂，设立12道检测工序，层层把关。', 'security', 2),
 ('home_advantage', '先进技术', '拥有资深工程师团队和自动化生产线。支持从设计优化到成品制造的一站式服务。', 'smart_toy', 3),
-('global_config', '腾昌精密机械', 'TC Precision', 'precision_manufacturing', 0);
+('global_config', '腾昌精密机械', 'TC Precision', 'precision_manufacturing', 0),
+('about_intro', '公司简介', '腾昌精密机械成立于2005年，致力于为全球客户提供高精度的机械零部件加工服务。我们拥有先进的五轴加工中心、车铣复合机床等设备，以及一支经验丰富的工程师团队。', NULL, 1),
+('about_mission', '企业使命', '以精湛工艺，驱动工业未来。', NULL, 2),
+('about_vision', '企业愿景', '成为全球领先的精密制造解决方案提供商。', NULL, 3);
 
 -- Customer Cases
 CREATE TABLE customer_case (

@@ -18,7 +18,7 @@ const About: React.FC = () => {
   return (
     <div className="flex flex-col w-full bg-paper-white dark:bg-zinc-950">
       {/* Hero */}
-      <div className="relative h-[400px] w-full bg-industrial-grey text-white flex items-center justify-center bg-cover bg-center" style={{ backgroundImage: hero?.image ? `url('${hero.image}')` : undefined }}>
+      <div className="relative h-[400px] w-full bg-industrial-grey text-white flex items-center justify-center bg-cover bg-center" style={{ backgroundImage: `url('${hero?.image || 'https://picsum.photos/seed/about_hero/1920/600'}')` }}>
         <div className="absolute inset-0 bg-black/50"></div>
         <div className="relative z-10 text-center max-w-4xl px-6">
           <h1 className="text-4xl md:text-5xl font-bold mb-6">{hero?.title || '关于腾昌'}</h1>

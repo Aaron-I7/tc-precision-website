@@ -7,7 +7,7 @@
     <title>Tengchang Precision // System</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Spline+Sans:wght@300;400;500;600;700;800;900&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Spline+Sans:wght@300;400;500;600;700;800;900&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <script>
@@ -16,6 +16,12 @@
         theme: {
           extend: {
             colors: {
+              // New Brand Colors from Optimization Doc
+              'precision-blue': '#1A3A5A',
+              'metal-gray': '#E5E7EB',
+              'warning-orange': '#F97316',
+              
+              // Existing colors
               primary: '#d1d5db', // Precision Silver
               'industrial-grey': '#1a1a1a',
               'steel-blue': '#4a5568',
@@ -24,8 +30,8 @@
               'surface-dark': '#2d2c1e',
             },
             fontFamily: {
-              display: ['Spline Sans', 'Noto Sans SC', 'sans-serif'],
-              sans: ['Spline Sans', 'Noto Sans SC', 'sans-serif'],
+              display: ['Inter', 'PingFang SC', 'Spline Sans', 'Noto Sans SC', 'sans-serif'],
+              sans: ['Inter', 'PingFang SC', 'Spline Sans', 'Noto Sans SC', 'sans-serif'],
             },
             borderRadius: {
               DEFAULT: '1rem',

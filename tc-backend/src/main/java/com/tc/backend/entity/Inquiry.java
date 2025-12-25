@@ -15,6 +15,7 @@ public class Inquiry {
     private String phone;
     private String email;
     private String content;
+    private String attachment; // URL to uploaded file
     private String status; // e.g., 'unread', 'read', 'processed'
     private LocalDateTime createTime;
 }

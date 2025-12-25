@@ -3,6 +3,9 @@ import { useLocation } from 'react-router-dom';
 import { getAllContent, updateContent, ContentItem, getCases, saveCase, deleteCase, CustomerCase } from '../api/content';
 import { uploadFile } from '../api/file';
 import { AdvantageCard } from '../components/AdvantageCard';
+import { useConfirm } from '../components/ConfirmDialog';
+import { useToast } from '../components/Toast';
+import LocationPicker from '../components/LocationPicker';
 
 const ICONS = [
   'precision_manufacturing', 'factory', 'engineering', 'settings', 'build',
@@ -13,11 +16,16 @@ const ICONS = [
 ];
 
 const ContentManagement: React.FC = () => {
+  const { confirm } = useConfirm();
+  const { success, error } = useToast();
   const location = useLocation();
   const [items, setItems] = useState<ContentItem[]>([]);
   const [cases, setCases] = useState<CustomerCase[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingItem, setEditingItem] = useState<ContentItem | null>(null);
+  const [showLocationPicker, setShowLocationPicker] = useState(false);
+  // Case Edit State
+  const [isEditingCase, setIsEditingCase] = useState(false);
   const [editingCase, setEditingCase] = useState<CustomerCase | null>(null);
   const [activeTab, setActiveTab] = useState<'home' | 'about' | 'contact' | 'cases' | 'global'>('home');
   const [uploading, setUploading] = useState(false);
@@ -52,38 +60,60 @@ const ContentManagement: React.FC = () => {
     setEditingItem({ ...item });
   };
 
+  const handleLocationSelect = (location: { lat: number; lng: number; address: string }) => {
+    if (!editingItem) return;
+    const latLng = `${location.lat},${location.lng}`;
+    setEditingItem({ ...editingItem, image: latLng });
+    setShowLocationPicker(false);
+    success('坐标已更新: ' + latLng);
+  };
+
   const handleSave = async () => {
     if (!editingItem) return;
     try {
       await updateContent(editingItem);
-      alert('保存成功');
+      success('保存成功');
       setEditingItem(null);
       fetchData();
-    } catch (error) {
-      alert('保存失败');
+    } catch (err) {
+      error('保存失败');
     }
   };
 
   const handleCaseSave = async () => {
     if (!editingCase) return;
     try {
-      await saveCase(editingCase);
-      alert('保存成功');
+      // Ensure id is undefined if it's 0 or empty string (for new cases)
+      const caseToSave = { ...editingCase };
+      if (!caseToSave.id) {
+        delete caseToSave.id;
+      }
+      
+      await saveCase(caseToSave);
+      success('保存成功');
       setEditingCase(null);
+      setIsEditingCase(false);
       fetchData();
-    } catch (error) {
-      alert('保存失败');
+    } catch (err) {
+      error('保存失败');
+      console.error(err);
     }
   };
 
   const handleCaseDelete = async (id: number) => {
-    if (!window.confirm('确定要删除吗？')) return;
-    try {
-      await deleteCase(id);
-      fetchData();
-    } catch (error) {
-      alert('删除失败');
-    }
+    confirm({
+      title: '确认删除',
+      content: '确定要删除这个案例吗？此操作无法撤销。',
+      onConfirm: async () => {
+        try {
+          await deleteCase(id);
+          success('删除成功');
+          fetchData();
+        } catch (err) {
+          error('删除失败');
+        }
+      }
+    });
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, onSuccess: (url: string) => void) => {
@@ -94,8 +124,8 @@ const ContentManagement: React.FC = () => {
     try {
       const url = await uploadFile(file);
       onSuccess(url);
-    } catch (error) {
-      alert('图片上传失败');
+    } catch (err) {
+      error('图片上传失败');
     } finally {
       setUploading(false);
     }
@@ -268,11 +298,14 @@ const ContentManagement: React.FC = () => {
             )}
 
             {/* Cases Tab */}
-            {activeTab === 'cases' && (
+            {activeTab === 'cases' && !isEditingCase && (
               <div>
                 <div className="flex justify-end mb-6">
                   <button 
-                    onClick={() => setEditingCase({ id: 0, title: '', industry: '', description: '', image: '' } as any)}
+                    onClick={() => {
+                      setEditingCase({ id: 0, title: '', industry: '', description: '', image: '' } as any);
+                      setIsEditingCase(true);
+                    }}
                     className="flex items-center gap-2 bg-industrial-grey text-white px-6 py-3 rounded-lg font-bold hover:bg-black"
                   >
                     <span className="material-symbols-outlined">add</span>
@@ -292,7 +325,10 @@ const ContentManagement: React.FC = () => {
                       </div>
                       <div className="flex gap-2">
                         <button 
-                          onClick={() => setEditingCase({...item})}
+                          onClick={() => {
+                            setEditingCase({...item});
+                            setIsEditingCase(true);
+                          }}
                           className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
                         >
                           <span className="material-symbols-outlined">edit</span>
@@ -306,6 +342,128 @@ const ContentManagement: React.FC = () => {
                       </div>
                     </div>
                   ))}
+                </div>
+              </div>
+            )}
+
+            {/* Case Editor View (Independent View) */}
+            {activeTab === 'cases' && isEditingCase && editingCase && (
+              <div className="bg-white dark:bg-zinc-900 rounded-2xl p-8 shadow-sm animate-in fade-in slide-in-from-right-4 duration-300">
+                <div className="flex items-center justify-between mb-8 border-b border-gray-100 dark:border-zinc-800 pb-6">
+                  <div className="flex items-center gap-4">
+                    <button 
+                      onClick={() => {
+                        setIsEditingCase(false);
+                        setEditingCase(null);
+                      }}
+                      className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-full transition-colors"
+                    >
+                      <span className="material-symbols-outlined">arrow_back</span>
+                    </button>
+                    <h2 className="text-2xl font-bold">{editingCase.id ? '编辑案例' : '新增案例'}</h2>
+                  </div>
+                  <div className="flex gap-3">
+                    <button 
+                      onClick={() => {
+                        setIsEditingCase(false);
+                        setEditingCase(null);
+                      }}
+                      className="px-6 py-2.5 rounded-lg font-bold text-gray-600 hover:bg-gray-100 transition-colors"
+                    >
+                      取消
+                    </button>
+                    <button 
+                      onClick={handleCaseSave}
+                      className="px-6 py-2.5 rounded-lg font-bold bg-industrial-grey text-white hover:bg-black transition-colors shadow-lg"
+                    >
+                      保存案例
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                  <div className="space-y-8">
+                    <div>
+                      <label className="block text-sm font-bold mb-2 text-gray-700 dark:text-gray-300">案例标题</label>
+                      <input 
+                        type="text" 
+                        className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-zinc-800 border-2 border-transparent focus:border-blue-500 focus:bg-white dark:focus:bg-zinc-900 transition-all outline-none"
+                        value={editingCase.title}
+                        onChange={(e) => setEditingCase({...editingCase, title: e.target.value})}
+                        placeholder="输入案例标题"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-bold mb-2 text-gray-700 dark:text-gray-300">所属行业</label>
+                      <input 
+                        type="text" 
+                        className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-zinc-800 border-2 border-transparent focus:border-blue-500 focus:bg-white dark:focus:bg-zinc-900 transition-all outline-none"
+                        value={editingCase.industry}
+                        onChange={(e) => setEditingCase({...editingCase, industry: e.target.value})}
+                        placeholder="例如：汽车制造、医疗器械"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-bold mb-2 text-gray-700 dark:text-gray-300">案例描述</label>
+                      <textarea 
+                        rows={8}
+                        className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-zinc-800 border-2 border-transparent focus:border-blue-500 focus:bg-white dark:focus:bg-zinc-900 transition-all outline-none resize-none"
+                        value={editingCase.description}
+                        onChange={(e) => setEditingCase({...editingCase, description: e.target.value})}
+                        placeholder="详细描述案例背景、解决方案及成果..."
+                      ></textarea>
+                    </div>
+                  </div>
+
+                  <div className="space-y-6">
+                    <label className="block text-sm font-bold mb-2 text-gray-700 dark:text-gray-300">案例封面图</label>
+                    <div className="bg-gray-50 dark:bg-zinc-800 rounded-2xl p-6 border-2 border-dashed border-gray-200 dark:border-zinc-700 hover:border-blue-500 transition-colors">
+                      <div className="aspect-video w-full rounded-xl overflow-hidden bg-white dark:bg-zinc-900 mb-6 flex items-center justify-center relative group">
+                        {editingCase.image ? (
+                          <img src={editingCase.image} alt="Preview" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="text-center text-gray-400">
+                            <span className="material-symbols-outlined text-6xl mb-2">image</span>
+                            <p>暂无图片预览</p>
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="flex gap-4">
+                        <div className="flex-1">
+                          <input 
+                            type="file" 
+                            accept="image/*"
+                            id="case-image-upload"
+                            className="hidden"
+                            onChange={(e) => handleFileUpload(e, (url) => setEditingCase({...editingCase, image: url}))}
+                          />
+                          <label 
+                            htmlFor="case-image-upload"
+                            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors font-bold text-sm"
+                          >
+                            <span className="material-symbols-outlined">cloud_upload</span>
+                            {uploading ? '上传中...' : '上传本地图片'}
+                          </label>
+                        </div>
+                      </div>
+                      
+                      <div className="mt-4">
+                        <div className="relative">
+                          <input 
+                            type="text" 
+                            className="w-full pl-10 pr-4 py-3 rounded-xl bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 focus:border-blue-500 outline-none text-sm"
+                            value={editingCase.image || ''}
+                            onChange={(e) => setEditingCase({...editingCase, image: e.target.value})}
+                            placeholder="或输入网络图片 URL"
+                          />
+                          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">link</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
@@ -344,93 +502,86 @@ const ContentManagement: React.FC = () => {
                 {editingItem.section === 'global_config' ? '修改全局配置' : '编辑内容'}
               </h2>
               
-              <div className="space-y-6">
+              <div className="space-y-6 max-h-[70vh] overflow-y-auto px-1">
                 <div>
-                  <label className="block text-sm font-bold mb-2">
-                    {editingItem.section === 'global_config' ? '主标题 (公司名)' : '标题'}
-                  </label>
-                  <input 
-                    type="text" 
-                    className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:border-blue-500 outline-none"
+                  <label className="block text-sm font-bold mb-2">标题</label>
+                  <input
+                    type="text"
                     value={editingItem.title}
-                    onChange={(e) => setEditingItem({...editingItem, title: e.target.value})}
+                    onChange={(e) => setEditingItem({ ...editingItem, title: e.target.value })}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-black focus:ring-0 outline-none transition-colors"
                   />
                 </div>
                 
-                {editingItem.section === 'global_config' ? (
-                  <div>
-                    <label className="block text-sm font-bold mb-2">副标题 / 英文名</label>
-                    <input 
-                      type="text" 
-                      className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:border-blue-500 outline-none"
-                      value={editingItem.description}
-                      onChange={(e) => setEditingItem({...editingItem, description: e.target.value})}
-                    />
-                  </div>
-                ) : (
-                  <div>
-                    <label className="block text-sm font-bold mb-2">内容描述</label>
-                    <textarea 
-                      rows={6}
-                      className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:border-blue-500 outline-none resize-none"
-                      value={editingItem.description}
-                      onChange={(e) => setEditingItem({...editingItem, description: e.target.value})}
-                    ></textarea>
-                  </div>
-                )}
+                <div>
+                  <label className="block text-sm font-bold mb-2">内容描述</label>
+                  <textarea
+                    value={editingItem.description}
+                    onChange={(e) => setEditingItem({ ...editingItem, description: e.target.value })}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-black focus:ring-0 outline-none transition-colors"
+                    rows={4}
+                  />
+                </div>
 
-                {(editingItem.section.includes('contact') || editingItem.section === 'global_config' || editingItem.section === 'home_advantage') && (
+                {/* Geo Location Input - Only show for address related items or items with coordinates */}
+                {(editingItem.title.includes('地址') || (editingItem.image && editingItem.image.includes(','))) && (
                   <div>
-                     <label className="block text-sm font-bold mb-2">图标 (Material Symbols)</label>
-                     <div className="grid grid-cols-8 gap-2 max-h-40 overflow-y-auto p-2 border border-gray-200 rounded-lg">
-                        {ICONS.map(icon => (
-                          <button
-                            key={icon}
-                            onClick={() => setEditingItem({...editingItem, icon})}
-                            className={`aspect-square flex items-center justify-center rounded hover:bg-gray-100 ${editingItem.icon === icon ? 'bg-industrial-grey text-white hover:bg-industrial-grey' : 'text-gray-500'}`}
-                          >
-                            <span className="material-symbols-outlined text-xl">{icon}</span>
-                          </button>
-                        ))}
-                     </div>
-                     <input 
-                       type="text" 
-                       className="w-full mt-2 px-4 py-2 text-sm rounded-lg bg-gray-50 border border-gray-200 focus:border-blue-500 outline-none"
-                       value={editingItem.icon || ''}
-                       onChange={(e) => setEditingItem({...editingItem, icon: e.target.value})}
-                       placeholder="自定义图标名称 (可选)"
-                     />
-                  </div>
-                )}
-
-                {(editingItem.section.includes('hero') || editingItem.section === 'about_intro') && (
-                  <div>
-                    <label className="block text-sm font-bold mb-2">图片</label>
-                    <div className="flex gap-4 items-start">
-                      <div className="flex-1">
-                        <input 
-                          type="file" 
-                          accept="image/*"
-                          className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                          onChange={(e) => handleFileUpload(e, (url) => setEditingItem({...editingItem, image: url}))}
-                        />
-                        {uploading && <p className="text-xs text-blue-600 mt-1">上传中...</p>}
-                        <input 
-                          type="text" 
-                          className="w-full mt-2 px-4 py-2 text-sm rounded-lg bg-gray-50 border border-gray-200 focus:border-blue-500 outline-none"
-                          value={editingItem.image || ''}
-                          onChange={(e) => setEditingItem({...editingItem, image: e.target.value})}
-                          placeholder="或输入图片URL"
-                        />
-                      </div>
-                      {editingItem.image && (
-                        <div className="w-24 h-24 rounded-lg overflow-hidden bg-gray-100 border border-gray-200 shrink-0">
-                          <img src={editingItem.image} alt="Preview" className="w-full h-full object-cover" />
-                        </div>
-                      )}
+                    <label className="block text-sm font-bold mb-2">地图坐标 (纬度,经度)</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={editingItem.image || ''}
+                        onChange={(e) => setEditingItem({ ...editingItem, image: e.target.value })}
+                        className="flex-1 px-4 py-3 rounded-xl border border-gray-200 focus:border-black focus:ring-0 outline-none transition-colors font-mono text-sm"
+                        placeholder="例如: 31.365372,120.782874"
+                      />
+                      <button 
+                        onClick={() => setShowLocationPicker(true)}
+                        className="px-4 py-2 bg-blue-50 text-blue-600 font-bold rounded-lg hover:bg-blue-100 transition-colors flex items-center gap-2 whitespace-nowrap"
+                        title="在地图上选择位置"
+                      >
+                        <span className="material-symbols-outlined">map</span>
+                        地图选点
+                      </button>
                     </div>
+                    <p className="text-xs text-gray-500 mt-2">
+                      点击“地图选点”打开地图选择器，支持搜索和拖拽定位。
+                    </p>
                   </div>
                 )}
+
+                <div>
+                  <label className="block text-sm font-bold mb-2">图标 (Material Symbols)</label>
+                  <div className="grid grid-cols-6 gap-2 p-4 border border-gray-200 rounded-xl max-h-40 overflow-y-auto">
+                    {ICONS.map((icon) => (
+                      <button
+                        key={icon}
+                        onClick={() => setEditingItem({ ...editingItem, icon })}
+                        className={`p-2 rounded-lg flex items-center justify-center transition-colors ${
+                          editingItem.icon === icon
+                            ? 'bg-black text-white'
+                            : 'hover:bg-gray-100 text-gray-600'
+                        }`}
+                      >
+                        <span className="material-symbols-outlined">{icon}</span>
+                      </button>
+                    ))}
+                  </div>
+                  <div className="mt-2 flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={editingItem.icon || ''}
+                      onChange={(e) => setEditingItem({ ...editingItem, icon: e.target.value })}
+                      className="flex-1 px-4 py-2 rounded-lg border border-gray-200 text-sm"
+                      placeholder="自定义图标代码..."
+                    />
+                    {editingItem.icon && (
+                      <div className="w-10 h-10 flex items-center justify-center bg-gray-100 rounded-lg">
+                        <span className="material-symbols-outlined">{editingItem.icon}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
 
               <div className="flex justify-end gap-4 mt-8">
@@ -450,89 +601,19 @@ const ContentManagement: React.FC = () => {
             </div>
           </div>
         )}
-
-        {/* Case Edit Modal */}
-        {editingCase && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white dark:bg-zinc-900 rounded-2xl p-8 w-full max-w-2xl shadow-2xl animate-in fade-in zoom-in duration-200 max-h-[90vh] overflow-y-auto">
-              <h2 className="text-2xl font-bold mb-6">{editingCase.id ? '编辑案例' : '新增案例'}</h2>
-              
-              <div className="space-y-6">
-                <div>
-                  <label className="block text-sm font-bold mb-2">案例标题</label>
-                  <input 
-                    type="text" 
-                    className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:border-blue-500 outline-none"
-                    value={editingCase.title}
-                    onChange={(e) => setEditingCase({...editingCase, title: e.target.value})}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-bold mb-2">所属行业</label>
-                  <input 
-                    type="text" 
-                    className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:border-blue-500 outline-none"
-                    value={editingCase.industry}
-                    onChange={(e) => setEditingCase({...editingCase, industry: e.target.value})}
-                    placeholder="例如：汽车制造、医疗器械"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-bold mb-2">案例描述</label>
-                  <textarea 
-                    rows={6}
-                    className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:border-blue-500 outline-none resize-none"
-                    value={editingCase.description}
-                    onChange={(e) => setEditingCase({...editingCase, description: e.target.value})}
-                  ></textarea>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-bold mb-2">图片</label>
-                  <div className="flex gap-4 items-start">
-                    <div className="flex-1">
-                      <input 
-                        type="file" 
-                        accept="image/*"
-                        className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                        onChange={(e) => handleFileUpload(e, (url) => setEditingCase({...editingCase, image: url}))}
-                      />
-                      {uploading && <p className="text-xs text-blue-600 mt-1">上传中...</p>}
-                      <input 
-                        type="text" 
-                        className="w-full mt-2 px-4 py-2 text-sm rounded-lg bg-gray-50 border border-gray-200 focus:border-blue-500 outline-none"
-                        value={editingCase.image || ''}
-                        onChange={(e) => setEditingCase({...editingCase, image: e.target.value})}
-                        placeholder="或输入图片URL"
-                      />
-                    </div>
-                    {editingCase.image && (
-                      <div className="w-24 h-24 rounded-lg overflow-hidden bg-gray-100 border border-gray-200 shrink-0">
-                        <img src={editingCase.image} alt="Preview" className="w-full h-full object-cover" />
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-4 mt-8">
-                <button 
-                  onClick={() => setEditingCase(null)}
-                  className="px-6 py-3 rounded-lg font-bold text-gray-600 hover:bg-gray-100"
-                >
-                  取消
-                </button>
-                <button 
-                  onClick={handleCaseSave}
-                  className="px-6 py-3 rounded-lg font-bold bg-industrial-grey text-white hover:bg-black"
-                >
-                  保存
-                </button>
-              </div>
-            </div>
-          </div>
+        {showLocationPicker && editingItem && (
+          <LocationPicker
+            initialLocation={
+              editingItem.image && editingItem.image.includes(',') 
+                ? { 
+                    lat: parseFloat(editingItem.image.split(',')[0]), 
+                    lng: parseFloat(editingItem.image.split(',')[1]) 
+                  }
+                : undefined
+            }
+            onConfirm={handleLocationSelect}
+            onCancel={() => setShowLocationPicker(false)}
+          />
         )}
       </div>
     </div>

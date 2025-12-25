@@ -6,6 +6,7 @@ export interface Inquiry {
   phone: string;
   email: string;
   content: string;
+  attachment?: string; // Add attachment field
   status: string;
   createTime: string;
 }
@@ -20,4 +21,8 @@ export const saveInquiry = (data: Partial<Inquiry>) => {
 
 export const deleteInquiry = (id: number) => {
   return request.delete<any, boolean>(`/inquiries/${id}`);
+};
+
+export const getUnreadCount = () => {
+  return request.get<any, number>('/inquiries/unread-count');
 };

@@ -30,7 +30,7 @@ const App: React.FC = () => {
   const [isAdmin, setIsAdmin] = useState(false);
 
   return (
-    <HashRouter>
+    <>
       <ScrollToTop />
       <div className="flex flex-col min-h-screen">
         <Routes>
@@ -54,7 +54,7 @@ const App: React.FC = () => {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
-    </HashRouter>
+    </>
   );
 };
 

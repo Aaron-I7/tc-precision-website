@@ -24,6 +24,13 @@ public class InquiryController {
             new LambdaQueryWrapper<Inquiry>().orderByDesc(Inquiry::getCreateTime)));
     }
 
+    @GetMapping("/unread-count")
+    public Result<Long> getUnreadCount() {
+        return Result.success(inquiryService.count(
+            new LambdaQueryWrapper<Inquiry>().eq(Inquiry::getStatus, "unread")
+        ));
+    }
+
     @PostMapping
     public Result<Boolean> save(@RequestBody Inquiry inquiry) {
         if (inquiry.getId() == null) {

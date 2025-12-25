@@ -13,6 +13,7 @@ public class VisitLog {
     @TableId(type = IdType.AUTO)
     private Long id;
     private String ip;
+    private String location; // Add location field
     private String path;
     private String method;
     private String userAgent;

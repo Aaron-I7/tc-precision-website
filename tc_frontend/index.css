@@ -1,0 +1,22 @@
+@import "tailwindcss";
+
+@theme {
+  --color-precision-blue: #0052cc;
+  --color-metal-gray: #64748b;
+  --color-warning-orange: #f59e0b;
+  --color-industrial-grey: #374151;
+  --color-steel-blue: #475569;
+  --color-paper-white: #f8fafc;
+}
+
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}

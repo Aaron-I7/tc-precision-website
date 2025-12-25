@@ -3,8 +3,12 @@ import { getProducts, saveProduct, deleteProduct } from '../api/product';
 import { getCategories, saveCategory, deleteCategory, Category } from '../api/category';
 import { uploadFile } from '../api/file';
 import { Product } from '../types';
+import { useConfirm } from '../components/ConfirmDialog';
+import { useToast } from '../components/Toast';
 
 const Inventory: React.FC = () => {
+  const { confirm } = useConfirm();
+  const { success, error } = useToast();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -43,22 +47,28 @@ const Inventory: React.FC = () => {
     if (!editingProduct) return;
     try {
       await saveProduct(editingProduct);
-      alert('保存成功');
+      success('保存成功');
       setEditingProduct(null);
       fetchData();
-    } catch (error) {
-      alert('保存失败');
+    } catch (err) {
+      error('保存失败');
     }
   };
 
   const handleProductDelete = async (id: string | number) => {
-    if (!window.confirm('确定要删除吗？')) return;
-    try {
-      await deleteProduct(id.toString());
-      fetchData();
-    } catch (error) {
-      alert('删除失败');
-    }
+    confirm({
+      title: '确认删除',
+      content: '确定要删除这个产品吗？此操作无法撤销。',
+      onConfirm: async () => {
+        try {
+          await deleteProduct(id.toString());
+          success('删除成功');
+          fetchData();
+        } catch (err) {
+          error('删除失败');
+        }
+      }
+    });
   };
 
   // Category Handlers
@@ -66,22 +76,28 @@ const Inventory: React.FC = () => {
     if (!editingCategory) return;
     try {
       await saveCategory(editingCategory);
-      alert('保存成功');
+      success('保存成功');
       setEditingCategory(null);
       fetchData();
-    } catch (error) {
-      alert('保存失败');
+    } catch (err) {
+      error('保存失败');
     }
   };
 
   const handleCategoryDelete = async (id: number) => {
-    if (!window.confirm('确定要删除分类吗？')) return;
-    try {
-      await deleteCategory(id);
-      fetchData();
-    } catch (error) {
-      alert('删除失败');
-    }
+    confirm({
+      title: '确认删除分类',
+      content: '确定要删除这个分类吗？删除分类可能会影响该分类下的产品显示。',
+      onConfirm: async () => {
+        try {
+          await deleteCategory(id);
+          success('删除成功');
+          fetchData();
+        } catch (err) {
+          error('删除失败');
+        }
+      }
+    });
   };
 
   const handleExport = () => {
@@ -104,8 +120,8 @@ const Inventory: React.FC = () => {
     try {
       const url = await uploadFile(file);
       onSuccess(url);
-    } catch (error) {
-      alert('图片上传失败');
+    } catch (err) {
+      error('图片上传失败');
     } finally {
       setUploading(false);
     }

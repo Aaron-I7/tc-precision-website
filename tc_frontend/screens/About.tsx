@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { getContentBySection, ContentItem } from '../api/content';
+import PageLoading from '../components/PageLoading';
 
 const About: React.FC = () => {
+  const [loading, setLoading] = useState(true);
   const [intro, setIntro] = useState<ContentItem | null>(null);
   const [hero, setHero] = useState<ContentItem | null>(null);
 
@@ -12,11 +14,17 @@ const About: React.FC = () => {
     ]).then(([introRes, heroRes]) => {
       if (introRes && introRes.length > 0) setIntro(introRes[0]);
       if (heroRes && heroRes.length > 0) setHero(heroRes[0]);
+    }).finally(() => {
+      setLoading(false);
     });
   }, []);
 
+  if (loading) {
+    return <PageLoading />;
+  }
+
   return (
-    <div className="flex flex-col w-full bg-paper-white dark:bg-zinc-950">
+    <div className="flex flex-col w-full bg-paper-white dark:bg-zinc-950 animate-in fade-in duration-500">
       {/* Hero */}
       <div className="relative h-[400px] w-full bg-industrial-grey text-white flex items-center justify-center bg-cover bg-center" style={{ backgroundImage: `url('${hero?.image || 'https://picsum.photos/seed/about_hero/1920/600'}')` }}>
         <div className="absolute inset-0 bg-black/50"></div>

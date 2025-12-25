@@ -19,7 +19,9 @@ services:
       # 修改路径以强制触发新环境的初始化 (v3)
       - /opt/tc-project/mysql-data-v3:/var/lib/mysql
       # 初始化 SQL 脚本 (第一次启动会自动执行)
-      - ./tc-backend/src/main/resources/schema.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./tc-backend/src/main/resources/schema.sql:/docker-entrypoint-initdb.d/01_init.sql
+      # 迁移脚本 (按字母顺序执行，V1.0.1 会在 01_init 之后执行)
+      - ./tc-backend/src/main/resources/db/migration:/docker-entrypoint-initdb.d/migration
     networks:
       - tc-network
 

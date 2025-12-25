@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import request from '../api/request';
+import { login } from '../api/auth';
+import { useToast } from '../components/Toast';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
+  const { success, error } = useToast();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -12,19 +14,12 @@ const Login: React.FC = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await request.post<any, any>('/auth/login', { username, password });
-      // request.ts interceptor handles the response format, assuming it returns data directly on success
-      // If result structure is { code, data, msg }, request.ts returns data.
-      // So res should be { token: '...', user: ... }
-      if (res && res.token) {
-        localStorage.setItem('token', res.token);
-        localStorage.setItem('user', JSON.stringify(res.user));
-        navigate('/admin');
-      } else {
-        alert('登录失败: 未获取到令牌');
-      }
-    } catch (error: any) {
-      alert(error.message || '登录失败');
+      const res = await login(username, password);
+      localStorage.setItem('token', res);
+      success('登录成功');
+      navigate('/admin');
+    } catch (err) {
+      error('登录失败，请检查用户名或密码');
     } finally {
       setLoading(false);
     }

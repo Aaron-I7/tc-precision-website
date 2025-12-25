@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { getProductById } from '../api/product';
 import { Product } from '../types';
+import PageLoading from '../components/PageLoading';
 
 const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -26,11 +27,11 @@ const ProductDetail: React.FC = () => {
     }
   };
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center">加载中...</div>;
+  if (loading) return <PageLoading />;
   if (!product) return <div className="min-h-screen flex items-center justify-center">产品不存在</div>;
 
   return (
-    <div className="min-h-screen bg-white dark:bg-zinc-950 py-12">
+    <div className="min-h-screen bg-white dark:bg-zinc-950 py-12 animate-in fade-in duration-500">
       <div className="max-w-[1280px] mx-auto px-6">
         <Link to="/products" className="inline-flex items-center text-gray-500 hover:text-black mb-8">
           <span className="material-symbols-outlined mr-2">arrow_back</span>

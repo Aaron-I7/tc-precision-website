@@ -54,7 +54,7 @@ const Home: React.FC = () => {
           <div className="max-w-2xl space-y-6">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur border border-white/20 text-white w-fit">
               <span className="w-2 h-2 rounded-full bg-warning-orange animate-pulse"></span>
-              <span className="text-xs font-bold uppercase tracking-wider">Established Since 1990</span>
+              <span className="text-xs font-bold uppercase tracking-wider">Established Since 2018</span>
             </div>
             <h2 className="text-5xl md:text-7xl font-bold leading-tight tracking-tight whitespace-pre-wrap font-display">
               {hero?.title || '精工细作\n匠心筑梦'}

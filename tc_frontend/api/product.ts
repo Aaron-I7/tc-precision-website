@@ -1,7 +1,16 @@
 import request from './request';
 import { Product } from '../types';
 
-export const getProducts = (params: any) => {
+export interface ProductQueryParams {
+  page?: number;
+  size?: number;
+  category?: string;
+  search?: string;
+  featured?: boolean;
+  status?: string;
+}
+
+export const getProducts = (params: ProductQueryParams) => {
   return request.get<any, { records: Product[], total: number }>('/products', { params });
 };
 

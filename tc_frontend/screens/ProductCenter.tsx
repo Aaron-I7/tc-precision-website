@@ -1,22 +1,40 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getProducts } from '../api/product';
+import { getCategories, Category } from '../api/category';
 import { Product } from '../types';
 import PageLoading from '../components/PageLoading';
 
 const ProductCenter: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState('');
+
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   useEffect(() => {
     fetchProducts();
   }, [category]);
 
+  const fetchData = async () => {
+    try {
+      const res = await getCategories();
+      setCategories(res);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const res = await getProducts({ category: category || undefined });
+      const res = await getProducts({ 
+        category: category || undefined,
+        status: 'In Stock'
+      });
       setProducts(res.records);
     } catch (error) {
       console.error(error);
@@ -25,9 +43,7 @@ const ProductCenter: React.FC = () => {
     }
   };
 
-  const categories = ['全部', '工业传动', '航空航天', '医疗设备', '液压系统', '精密组件'];
-
-  if (loading) {
+  if (loading && products.length === 0) {
     return <PageLoading />;
   }
 
@@ -38,17 +54,27 @@ const ProductCenter: React.FC = () => {
         
         {/* Filter */}
         <div className="flex flex-wrap justify-center gap-4 mb-12">
+          <button
+            onClick={() => setCategory('')}
+            className={`px-6 py-2 rounded-full text-sm font-bold transition-all ${
+              !category
+                ? 'bg-industrial-grey text-white shadow-lg'
+                : 'bg-white text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            全部
+          </button>
           {categories.map((cat) => (
             <button
-              key={cat}
-              onClick={() => setCategory(cat === '全部' ? '' : cat)}
+              key={cat.id}
+              onClick={() => setCategory(cat.name)}
               className={`px-6 py-2 rounded-full text-sm font-bold transition-all ${
-                (category === cat || (cat === '全部' && !category))
+                category === cat.name
                   ? 'bg-industrial-grey text-white shadow-lg'
                   : 'bg-white text-gray-600 hover:bg-gray-100'
               }`}
             >
-              {cat}
+              {cat.name}
             </button>
           ))}
         </div>
@@ -64,7 +90,11 @@ const ProductCenter: React.FC = () => {
                 <div className="text-xs font-bold text-blue-600 mb-2 uppercase tracking-wider">{product.category}</div>
                 <h3 className="text-lg font-bold mb-2 group-hover:text-blue-600 transition-colors">{product.name}</h3>
                 <div className="flex justify-between items-center mt-4">
-                  <span className="text-xl font-bold text-gray-900 dark:text-white">¥{product.price}</span>
+                  {product.showPrice !== false ? (
+                    <span className="text-sm font-bold text-gray-900 dark:text-white">参考价：¥{product.price}</span>
+                  ) : (
+                    <span></span>
+                  )}
                   <span className="text-sm text-gray-500">详情 &rarr;</span>
                 </div>
               </div>

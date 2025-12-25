@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { submitMessage } from '../api/contact';
@@ -28,8 +28,21 @@ const Contact: React.FC = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [contactInfo, setContactInfo] = useState<ContentItem[]>([]);
   const [fileUploading, setFileUploading] = useState(false);
-  // Default coordinates (Suzhou)
-  const [mapCenter, setMapCenter] = useState<[number, number]>([31.365372, 120.782874]);
+  // Default coordinates (Suzhou) - initialized as [0, 0] to indicate not ready
+  const [mapCenter, setMapCenter] = useState<[number, number]>([0, 0]);
+
+  // Create a custom component to update map center and handle resize
+  const ChangeView = ({ center }: { center: [number, number] }) => {
+    const map = useMap();
+    useEffect(() => {
+      map.setView(center, map.getZoom());
+      // Force map to invalidate size after a short delay to fix rendering issues
+      setTimeout(() => {
+        map.invalidateSize();
+      }, 100);
+    }, [center, map]);
+    return null;
+  };
 
   useEffect(() => {
     getContentBySection('contact_info').then(data => {
@@ -40,10 +53,15 @@ const Contact: React.FC = () => {
         const [lat, lng] = addressItem.image.split(',').map(Number);
         if (!isNaN(lat) && !isNaN(lng)) {
           setMapCenter([lat, lng]);
+        } else {
+          setMapCenter([31.365372, 120.782874]);
         }
+      } else {
+        setMapCenter([31.365372, 120.782874]);
       }
     }).catch(() => {
       console.error('Failed to fetch contact info');
+      setMapCenter([31.365372, 120.782874]);
     }).finally(() => {
       setPageLoading(false);
     });
@@ -131,27 +149,29 @@ const Contact: React.FC = () => {
 
             {/* Map */}
             <div className="w-full h-[400px] rounded-2xl overflow-hidden shadow-lg border border-gray-200 dark:border-zinc-800 mt-8 relative z-0">
-               {/* Key prop ensures map re-renders when center changes */}
-               <MapContainer 
-                 key={`${mapCenter[0]}-${mapCenter[1]}`}
-                 center={mapCenter} 
-                 zoom={15} 
-                 scrollWheelZoom={false} 
-                 style={{ height: '100%', width: '100%' }}
-               >
-                  <TileLayer
-                    attribution='&copy; 高德地图'
-                    url="http://webrd01.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}"
-                  />
-                  <Marker position={mapCenter}>
-                   <Popup>
-                     <div className="font-bold">腾昌精密机械</div>
-                     <div className="text-xs">
-                        {contactInfo.find(i => i.title.includes('地址'))?.description || '江苏省苏州市工业园区科技大道88号'}
-                     </div>
-                   </Popup>
-                 </Marker>
-               </MapContainer>
+               {/* Only render MapContainer when coordinates are ready to avoid center offset issues */}
+               {mapCenter[0] !== 0 && (
+                 <MapContainer 
+                   center={mapCenter} 
+                   zoom={15} 
+                   scrollWheelZoom={false} 
+                   style={{ height: '100%', width: '100%' }}
+                 >
+                    <ChangeView center={mapCenter} />
+                    <TileLayer
+                      attribution='&copy; 高德地图'
+                      url="http://webrd01.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}"
+                    />
+                    <Marker position={mapCenter}>
+                     <Popup>
+                       <div className="font-bold">腾昌精密机械</div>
+                       <div className="text-xs">
+                          {contactInfo.find(i => i.title.includes('地址'))?.description || '江苏省苏州市工业园区科技大道88号'}
+                       </div>
+                     </Popup>
+                   </Marker>
+                 </MapContainer>
+               )}
             </div>
           </div>
 

@@ -27,6 +27,7 @@ public class Product {
     private Map<String, String> specs;
     
     private Boolean isFeatured;
+    private Boolean showPrice;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
 }

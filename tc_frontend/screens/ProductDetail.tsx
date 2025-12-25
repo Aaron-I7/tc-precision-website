@@ -50,7 +50,13 @@ const ProductDetail: React.FC = () => {
               {product.category}
             </div>
             <h1 className="text-4xl font-bold">{product.name}</h1>
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">¥{product.price}</p>
+            
+            {product.showPrice !== false && (
+              <div>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">参考价：¥{product.price}</p>
+                <p className="text-sm text-red-500 font-bold mt-1">实际价格要与管理员确认</p>
+              </div>
+            )}
             
             <div className="prose dark:prose-invert max-w-none text-gray-600 dark:text-gray-400">
               <p>{product.description}</p>

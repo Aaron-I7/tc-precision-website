@@ -21,7 +21,8 @@ public class ProductController {
                                       @RequestParam(defaultValue = "10") Integer size,
                                       @RequestParam(required = false) String category,
                                       @RequestParam(required = false) String search,
-                                      @RequestParam(required = false) Boolean featured) {
+                                      @RequestParam(required = false) Boolean featured,
+                                      @RequestParam(required = false) String status) {
         
         Page<Product> pageParam = new Page<>(page, size);
         LambdaQueryWrapper<Product> wrapper = new LambdaQueryWrapper<>();
@@ -34,6 +35,9 @@ public class ProductController {
         }
         if (featured != null) {
             wrapper.eq(Product::getIsFeatured, featured);
+        }
+        if (StringUtils.hasText(status)) {
+            wrapper.eq(Product::getStatus, status);
         }
         
         wrapper.orderByDesc(Product::getCreateTime);

@@ -9,6 +9,7 @@ export interface Product {
   description: string;
   specs?: Record<string, string>;
   isFeatured?: boolean;
+  showPrice?: boolean;
 }
 
 export interface Inquiry {

@@ -41,6 +41,7 @@ CREATE TABLE product (
     description TEXT,
     specs JSON,
     is_featured BOOLEAN DEFAULT FALSE,
+    show_price BOOLEAN DEFAULT TRUE,
     create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
     update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );

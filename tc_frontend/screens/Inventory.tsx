@@ -5,6 +5,7 @@ import { uploadFile } from '../api/file';
 import { Product } from '../types';
 import { useConfirm } from '../components/ConfirmDialog';
 import { useToast } from '../components/Toast';
+import { Switch } from '../components/Switch';
 
 const Inventory: React.FC = () => {
   const { confirm } = useConfirm();
@@ -12,7 +13,7 @@ const Inventory: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'products' | 'categories'>('products');
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
   
   // Product Edit State
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -24,13 +25,13 @@ const Inventory: React.FC = () => {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [selectedCategory]);
 
   const fetchData = async () => {
     setLoading(true);
     try {
       const [prodRes, catRes] = await Promise.all([
-        getProducts({ size: 100 }),
+        getProducts({ size: 100, category: selectedCategory || undefined }),
         getCategories()
       ]);
       setProducts(prodRes.records);
@@ -46,6 +47,20 @@ const Inventory: React.FC = () => {
   const handleProductSave = async () => {
     if (!editingProduct) return;
     try {
+      // Check if category is new
+      const categoryName = editingProduct.category;
+      if (categoryName && !categories.some(c => c.name === categoryName)) {
+        // Auto create new category
+        await saveCategory({
+          name: categoryName,
+          description: '自动创建的分类',
+          sortOrder: categories.length + 1
+        });
+        // Refresh categories to ensure consistency
+        const newCategories = await getCategories();
+        setCategories(newCategories);
+      }
+
       await saveProduct(editingProduct);
       success('保存成功');
       setEditingProduct(null);
@@ -127,22 +142,31 @@ const Inventory: React.FC = () => {
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'In Stock': return 'bg-green-100 text-green-800';
-      case 'Low Stock': return 'bg-yellow-100 text-yellow-800';
-      case 'Out of Stock': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+  const handleToggleShowPrice = async (product: Product) => {
+    try {
+      await saveProduct({ ...product, showPrice: !product.showPrice });
+      success('更新成功');
+      fetchData();
+    } catch (err) {
+      error('更新失败');
     }
   };
 
   const getStatusText = (status: string) => {
     switch (status) {
       case 'In Stock': return '有货';
-      case 'Low Stock': return '库存紧张';
       case 'Out of Stock': return '缺货';
       case 'Draft': return '草稿';
       default: return status;
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'In Stock': return 'bg-green-100 text-green-800';
+      case 'Out of Stock': return 'bg-red-100 text-red-800';
+      case 'Draft': return 'bg-gray-100 text-gray-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -162,138 +186,133 @@ const Inventory: React.FC = () => {
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="flex space-x-4 border-b border-gray-200 dark:border-zinc-800">
-          <button 
-            onClick={() => setActiveTab('products')}
-            className={`px-4 py-3 font-bold text-sm transition-colors border-b-2 ${activeTab === 'products' ? 'border-black text-black' : 'border-transparent text-gray-500 hover:text-black'}`}
+        {/* Category Tabs & Filter */}
+        <div className="flex flex-wrap items-center gap-3 border-b border-gray-200 dark:border-zinc-800 pb-4">
+          <button
+            onClick={() => setSelectedCategory('')}
+            className={`px-4 py-2 rounded-full text-sm font-bold transition-all ${
+              !selectedCategory
+                ? 'bg-industrial-grey text-white shadow-md'
+                : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+            }`}
           >
-            产品列表
+            全部
           </button>
-          <button 
-            onClick={() => setActiveTab('categories')}
-            className={`px-4 py-3 font-bold text-sm transition-colors border-b-2 ${activeTab === 'categories' ? 'border-black text-black' : 'border-transparent text-gray-500 hover:text-black'}`}
+          {categories.map((category) => (
+            <div key={category.id} className="relative group">
+              <button
+                onClick={() => setSelectedCategory(category.name)}
+                className={`pr-8 pl-4 py-2 rounded-full text-sm font-bold transition-all ${
+                  selectedCategory === category.name
+                    ? 'bg-industrial-grey text-white shadow-md'
+                    : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+                }`}
+              >
+                {category.name}
+              </button>
+              <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <button
+                  onClick={(e) => { e.stopPropagation(); setEditingCategory(category); }}
+                  className={`p-1 rounded-full hover:bg-white/20 ${selectedCategory === category.name ? 'text-white' : 'text-gray-500'}`}
+                >
+                  <span className="material-symbols-outlined text-[14px]">edit</span>
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleCategoryDelete(category.id); }}
+                  className={`p-1 rounded-full hover:bg-white/20 ${selectedCategory === category.name ? 'text-white' : 'text-red-500'}`}
+                >
+                  <span className="material-symbols-outlined text-[14px]">close</span>
+                </button>
+              </div>
+            </div>
+          ))}
+          <button
+            onClick={() => setEditingCategory({ name: '', description: '', sortOrder: 0 } as any)}
+            className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 transition-colors"
           >
-            分类管理
+            <span className="material-symbols-outlined text-lg">add</span>
           </button>
         </div>
 
-        {/* Product List Tab */}
-        {activeTab === 'products' && (
-          <div className="space-y-6">
-            <div className="flex justify-end gap-3">
-              <button 
-                onClick={handleExport}
-                className="flex items-center justify-center gap-2 h-10 px-6 rounded-lg bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 text-sm font-bold shadow-sm hover:bg-gray-50 transition-colors"
-              >
-                <span className="material-symbols-outlined text-lg">download</span>
-                导出列表
-              </button>
-              <button 
-                onClick={() => setEditingProduct({ id: '', name: '', sku: '', category: categories[0]?.name || '', price: 0, status: 'In Stock', image: '', description: '' } as any)}
-                className="flex items-center justify-center gap-2 h-10 px-6 rounded-lg bg-industrial-grey text-white text-sm font-bold shadow-lg hover:bg-black transition-colors"
-              >
-                <span className="material-symbols-outlined text-lg">add</span>
-                新增产品
-              </button>
-            </div>
+        {/* Product List */}
+        <div className="space-y-6">
+          <div className="flex justify-end gap-3">
+            <button 
+              onClick={handleExport}
+              className="flex items-center justify-center gap-2 h-10 px-6 rounded-lg bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 text-sm font-bold shadow-sm hover:bg-gray-50 transition-colors"
+            >
+              <span className="material-symbols-outlined text-lg">download</span>
+              导出列表
+            </button>
+            <button 
+              onClick={() => setEditingProduct({ id: '', name: '', sku: '', category: categories[0]?.name || '', price: 0, status: 'In Stock', image: '', description: '', showPrice: true } as any)}
+              className="flex items-center justify-center gap-2 h-10 px-6 rounded-lg bg-industrial-grey text-white text-sm font-bold shadow-lg hover:bg-black transition-colors"
+            >
+              <span className="material-symbols-outlined text-lg">add</span>
+              新增产品
+            </button>
+          </div>
 
-            <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-gray-100 dark:border-zinc-800 overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                  <thead>
-                    <tr className="border-b border-gray-100 dark:border-zinc-800">
-                      <th className="px-6 py-4 text-sm font-bold text-gray-500 uppercase tracking-wider">产品名称</th>
-                      <th className="px-6 py-4 text-sm font-bold text-gray-500 uppercase tracking-wider">分类</th>
-                      <th className="px-6 py-4 text-sm font-bold text-gray-500 uppercase tracking-wider">价格</th>
-                      <th className="px-6 py-4 text-sm font-bold text-gray-500 uppercase tracking-wider">状态</th>
-                      <th className="px-6 py-4 text-sm font-bold text-gray-500 uppercase tracking-wider text-right">操作</th>
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-gray-100 dark:border-zinc-800 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="border-b border-gray-100 dark:border-zinc-800">
+                    <th className="px-6 py-4 text-sm font-bold text-gray-500 uppercase tracking-wider">产品名称</th>
+                    <th className="px-6 py-4 text-sm font-bold text-gray-500 uppercase tracking-wider">分类</th>
+                    <th className="px-6 py-4 text-sm font-bold text-gray-500 uppercase tracking-wider">参考价</th>
+                    <th className="px-6 py-4 text-sm font-bold text-gray-500 uppercase tracking-wider">显示价格</th>
+                    <th className="px-6 py-4 text-sm font-bold text-gray-500 uppercase tracking-wider">状态</th>
+                    <th className="px-6 py-4 text-sm font-bold text-gray-500 uppercase tracking-wider text-right">操作</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
+                  {products.map((product) => (
+                    <tr key={product.id} className="hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <img src={product.image} alt="" className="w-10 h-10 rounded-lg object-cover bg-gray-100" />
+                          <div>
+                            <div className="font-bold text-gray-900 dark:text-white">{product.name}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">{product.category}</td>
+                      <td className="px-6 py-4 font-bold text-gray-900 dark:text-white">¥{product.price}</td>
+                      <td className="px-6 py-4">
+                        <Switch 
+                          checked={product.showPrice !== false}
+                          onChange={() => handleToggleShowPrice(product)}
+                        />
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${getStatusColor(product.status)}`}>
+                          {getStatusText(product.status)}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex justify-end gap-2">
+                          <button 
+                            onClick={() => setEditingProduct({...product})}
+                            className="text-gray-400 hover:text-blue-600 transition-colors"
+                          >
+                            <span className="material-symbols-outlined">edit</span>
+                          </button>
+                          <button 
+                            onClick={() => handleProductDelete(product.id)}
+                            className="text-gray-400 hover:text-red-600 transition-colors"
+                          >
+                            <span className="material-symbols-outlined">delete</span>
+                          </button>
+                        </div>
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
-                    {products.map((product) => (
-                      <tr key={product.id} className="hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors">
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-3">
-                            <img src={product.image} alt="" className="w-10 h-10 rounded-lg object-cover bg-gray-100" />
-                            <div>
-                              <div className="font-bold text-gray-900 dark:text-white">{product.name}</div>
-                              <div className="text-xs text-gray-500">{product.sku}</div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">{product.category}</td>
-                        <td className="px-6 py-4 font-bold text-gray-900 dark:text-white">¥{product.price}</td>
-                        <td className="px-6 py-4">
-                          <span className={`px-3 py-1 rounded-full text-xs font-bold ${getStatusColor(product.status)}`}>
-                            {getStatusText(product.status)}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <div className="flex justify-end gap-2">
-                            <button 
-                              onClick={() => setEditingProduct({...product})}
-                              className="text-gray-400 hover:text-blue-600 transition-colors"
-                            >
-                              <span className="material-symbols-outlined">edit</span>
-                            </button>
-                            <button 
-                              onClick={() => handleProductDelete(product.id)}
-                              className="text-gray-400 hover:text-red-600 transition-colors"
-                            >
-                              <span className="material-symbols-outlined">delete</span>
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
-        )}
-
-        {/* Category Management Tab */}
-        {activeTab === 'categories' && (
-          <div className="space-y-6">
-             <div className="flex justify-end gap-3">
-              <button 
-                onClick={() => setEditingCategory({ id: 0, name: '', description: '', sortOrder: 0 } as any)}
-                className="flex items-center justify-center gap-2 h-10 px-6 rounded-lg bg-industrial-grey text-white text-sm font-bold shadow-lg hover:bg-black transition-colors"
-              >
-                <span className="material-symbols-outlined text-lg">add</span>
-                新增分类
-              </button>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-               {categories.map((category) => (
-                 <div key={category.id} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 relative group">
-                    <div className="flex justify-between items-start mb-4">
-                       <h3 className="text-lg font-bold">{category.name}</h3>
-                       <span className="text-xs bg-gray-100 px-2 py-1 rounded text-gray-500">排序: {category.sortOrder}</span>
-                    </div>
-                    <p className="text-gray-500 text-sm mb-4 min-h-[40px]">{category.description}</p>
-                    <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                       <button 
-                          onClick={() => setEditingCategory({...category})}
-                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
-                        >
-                          <span className="material-symbols-outlined">edit</span>
-                        </button>
-                        <button 
-                          onClick={() => handleCategoryDelete(category.id)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
-                        >
-                          <span className="material-symbols-outlined">delete</span>
-                        </button>
-                    </div>
-                 </div>
-               ))}
-            </div>
-          </div>
-        )}
+        </div>
 
         {/* Product Edit Modal */}
         {editingProduct && (
@@ -313,27 +332,21 @@ const Inventory: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold mb-2">SKU / 型号</label>
-                  <input 
-                    type="text" 
-                    className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:border-blue-500 outline-none"
-                    value={editingProduct.sku}
-                    onChange={(e) => setEditingProduct({...editingProduct, sku: e.target.value})}
-                  />
-                </div>
-
-                <div>
                   <label className="block text-sm font-bold mb-2">分类</label>
-                  <select 
-                    className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:border-blue-500 outline-none"
-                    value={editingProduct.category}
-                    onChange={(e) => setEditingProduct({...editingProduct, category: e.target.value})}
-                  >
-                    <option value="">请选择分类</option>
-                    {categories.map(c => (
-                      <option key={c.id} value={c.name}>{c.name}</option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <input
+                      list="category-options"
+                      className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:border-blue-500 outline-none"
+                      value={editingProduct.category}
+                      onChange={(e) => setEditingProduct({...editingProduct, category: e.target.value})}
+                      placeholder="选择或输入新分类"
+                    />
+                    <datalist id="category-options">
+                      {categories.map(c => (
+                        <option key={c.id} value={c.name} />
+                      ))}
+                    </datalist>
+                  </div>
                 </div>
 
                 <div>
@@ -347,6 +360,17 @@ const Inventory: React.FC = () => {
                 </div>
 
                 <div>
+                  <label className="block text-sm font-bold mb-2">前台显示价格</label>
+                  <div className="flex items-center h-[46px]">
+                    <Switch 
+                      checked={editingProduct.showPrice !== false}
+                      onChange={(checked) => setEditingProduct({...editingProduct, showPrice: checked})}
+                      label={editingProduct.showPrice !== false ? '显示' : '隐藏'}
+                    />
+                  </div>
+                </div>
+
+                <div>
                   <label className="block text-sm font-bold mb-2">状态</label>
                   <select 
                     className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:border-blue-500 outline-none"
@@ -354,7 +378,6 @@ const Inventory: React.FC = () => {
                     onChange={(e) => setEditingProduct({...editingProduct, status: e.target.value})}
                   >
                     <option value="In Stock">有货</option>
-                    <option value="Low Stock">库存紧张</option>
                     <option value="Out of Stock">缺货</option>
                     <option value="Draft">草稿</option>
                   </select>
@@ -433,16 +456,6 @@ const Inventory: React.FC = () => {
                     />
                   </div>
                   
-                  <div>
-                    <label className="block text-sm font-bold mb-2">英文名 / 描述</label>
-                    <input 
-                      type="text" 
-                      className="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:border-blue-500 outline-none"
-                      value={editingCategory.description}
-                      onChange={(e) => setEditingCategory({...editingCategory, description: e.target.value})}
-                    />
-                  </div>
-
                   <div>
                     <label className="block text-sm font-bold mb-2">排序值 (越小越靠前)</label>
                     <input 

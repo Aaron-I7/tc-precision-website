@@ -202,11 +202,11 @@ const Contact: React.FC = () => {
                       type="file"
                       className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                       onChange={handleFileChange}
-                      accept="image/*,.pdf,.doc,.docx"
+                      accept="image/png,image/jpeg,image/jpg,.pdf,.doc,.docx"
                     />
                     <div className="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-zinc-800 border border-dashed border-gray-300 dark:border-zinc-600 flex items-center justify-between pointer-events-none">
                       <span className="text-gray-500 dark:text-gray-400 truncate">
-                        {form.attachment ? '文件已上传' : (fileUploading ? '上传中...' : '点击选择文件 (支持图片/PDF)')}
+                        {form.attachment ? '文件已上传' : (fileUploading ? '上传中...' : '点击选择文件 (支持 PNG/JPG/PDF)')}
                       </span>
                       <span className="material-symbols-outlined text-gray-400">upload_file</span>
                     </div>

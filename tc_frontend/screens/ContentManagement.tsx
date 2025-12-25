@@ -550,38 +550,76 @@ const ContentManagement: React.FC = () => {
                   </div>
                 )}
 
-                <div>
-                  <label className="block text-sm font-bold mb-2">图标 (Material Symbols)</label>
-                  <div className="grid grid-cols-6 gap-2 p-4 border border-gray-200 rounded-xl max-h-40 overflow-y-auto">
-                    {ICONS.map((icon) => (
-                      <button
-                        key={icon}
-                        onClick={() => setEditingItem({ ...editingItem, icon })}
-                        className={`p-2 rounded-lg flex items-center justify-center transition-colors ${
-                          editingItem.icon === icon
-                            ? 'bg-black text-white'
-                            : 'hover:bg-gray-100 text-gray-600'
-                        }`}
-                      >
-                        <span className="material-symbols-outlined">{icon}</span>
-                      </button>
-                    ))}
-                  </div>
-                  <div className="mt-2 flex items-center gap-2">
-                    <input
-                      type="text"
-                      value={editingItem.icon || ''}
-                      onChange={(e) => setEditingItem({ ...editingItem, icon: e.target.value })}
-                      className="flex-1 px-4 py-2 rounded-lg border border-gray-200 text-sm"
-                      placeholder="自定义图标代码..."
-                    />
-                    {editingItem.icon && (
-                      <div className="w-10 h-10 flex items-center justify-center bg-gray-100 rounded-lg">
-                        <span className="material-symbols-outlined">{editingItem.icon}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
+                {/* Image Upload - For Hero, Intro, or Case related items */}
+                 {(editingItem.section.includes('hero') || editingItem.section === 'about_intro' || editingItem.section === 'home_advantage') && (
+                   <div>
+                     <label className="block text-sm font-bold mb-2">图片</label>
+                     <div className="flex gap-4 items-start">
+                       <div className="flex-1">
+                         <div className="relative">
+                            <input 
+                              type="file" 
+                              accept="image/*"
+                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                              onChange={(e) => handleFileUpload(e, (url) => setEditingItem({...editingItem, image: url}))}
+                            />
+                            <div className="w-full px-4 py-3 rounded-xl border border-dashed border-gray-300 bg-gray-50 hover:bg-gray-100 transition-colors flex items-center gap-2 text-gray-500">
+                                <span className="material-symbols-outlined">upload_file</span>
+                                <span className="text-sm font-medium">{uploading ? '上传中...' : '点击上传图片'}</span>
+                            </div>
+                         </div>
+                         <input 
+                           type="text" 
+                           className="w-full mt-2 px-4 py-3 rounded-xl border border-gray-200 focus:border-black focus:ring-0 outline-none transition-colors text-sm"
+                           value={editingItem.image || ''}
+                           onChange={(e) => setEditingItem({...editingItem, image: e.target.value})}
+                           placeholder="或输入图片 URL"
+                         />
+                       </div>
+                       {editingItem.image && (
+                         <div className="w-24 h-24 rounded-xl overflow-hidden bg-gray-100 border border-gray-200 shrink-0 shadow-sm">
+                           <img src={editingItem.image} alt="Preview" className="w-full h-full object-cover" />
+                         </div>
+                       )}
+                     </div>
+                   </div>
+                 )}
+ 
+                 {/* Icon Selector - Hide for Hero/Intro items that use images primarily */}
+                 {!editingItem.section.includes('hero') && editingItem.section !== 'about_intro' && (
+                   <div>
+                     <label className="block text-sm font-bold mb-2">图标 (Material Symbols)</label>
+                     <div className="grid grid-cols-6 gap-2 p-4 border border-gray-200 rounded-xl max-h-40 overflow-y-auto">
+                       {ICONS.map((icon) => (
+                         <button
+                           key={icon}
+                           onClick={() => setEditingItem({ ...editingItem, icon })}
+                           className={`p-2 rounded-lg flex items-center justify-center transition-colors ${
+                             editingItem.icon === icon
+                               ? 'bg-black text-white'
+                               : 'hover:bg-gray-100 text-gray-600'
+                           }`}
+                         >
+                           <span className="material-symbols-outlined">{icon}</span>
+                         </button>
+                       ))}
+                     </div>
+                     <div className="mt-2 flex items-center gap-2">
+                       <input
+                         type="text"
+                         value={editingItem.icon || ''}
+                         onChange={(e) => setEditingItem({ ...editingItem, icon: e.target.value })}
+                         className="flex-1 px-4 py-2 rounded-lg border border-gray-200 text-sm"
+                         placeholder="自定义图标代码..."
+                       />
+                       {editingItem.icon && (
+                         <div className="w-10 h-10 flex items-center justify-center bg-gray-100 rounded-lg">
+                           <span className="material-symbols-outlined">{editingItem.icon}</span>
+                         </div>
+                       )}
+                     </div>
+                   </div>
+                 )}
               </div>
 
               <div className="flex justify-end gap-4 mt-8">

@@ -76,6 +76,7 @@ INSERT INTO content_item (section, title, description, icon, sort_order) VALUES
 ('home_advantage', '先进技术', '拥有资深工程师团队和自动化生产线。支持从设计优化到成品制造的一站式服务。', 'smart_toy', 3),
 ('home_hero', '阿三大苏打实打实', '阿松大阿松发大苏打阿三', NULL, 0),
 ('global_config', '腾昌精密机械', 'TC Precision', 'precision_manufacturing', 0),
+('system_config', 'site_mode', 'default', 'settings', 0),
 ('about_hero', '啊实打实打算', '萨达萨达是', NULL, 0),
 ('about_intro', '公司简介', '腾昌精密机械成立于2005年，致力于为全球客户提供高精度的机械零部件加工服务。我们拥有先进的五轴加工中心、车铣复合机床等设备，以及一支经验丰富的工程师团队。', NULL, 1),
 ('about_mission', '企业使命', '以精湛工艺，驱动工业未来。', NULL, 2),

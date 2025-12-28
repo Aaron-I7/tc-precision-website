@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Home from './screens/Home';
 import About from './screens/About';
@@ -12,10 +12,20 @@ import Inventory from './screens/Inventory';
 import ContactManagement from './screens/ContactManagement';
 import ContentManagement from './screens/ContentManagement';
 import Login from './screens/Login';
+import BlogHome from './screens/blog/BlogHome';
+import BlogArticles from './screens/blog/BlogArticles';
+import BlogProjects from './screens/blog/BlogProjects';
+import BlogAbout from './screens/blog/BlogAbout';
+import BlogArticleDetail from './screens/blog/BlogArticleDetail';
+import { BlogLayout } from './components/blog/BlogLayout';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import Sidebar from './components/Sidebar';
 import ProtectedRoute from './components/ProtectedRoute';
+import { getSystemConfig, ContentItem } from './api/content';
+
+// Context for Site Mode
+export const SiteModeContext = React.createContext<'default' | 'blog'>('default');
 
 // Scroll to top on route change
 const ScrollToTop = () => {
@@ -28,9 +38,52 @@ const ScrollToTop = () => {
 
 const App: React.FC = () => {
   const [isAdmin, setIsAdmin] = useState(false);
+  const [siteMode, setSiteMode] = useState<'default' | 'blog'>('default');
+
+  useEffect(() => {
+    const fetchConfig = async () => {
+      try {
+        const items = await getSystemConfig();
+        const config = items.find((item: ContentItem) => item.title === 'site_mode');
+        if (config) {
+          setSiteMode(config.description as 'default' | 'blog');
+        }
+      } catch (e) {
+        console.error("Failed to load site config", e);
+      }
+    };
+    fetchConfig();
+  }, []);
+
+  if (siteMode === 'blog') {
+    return (
+      <SiteModeContext.Provider value={siteMode}>
+        <ScrollToTop />
+        <div className="flex flex-col min-h-screen">
+          <Routes>
+            <Route path="/" element={<BlogLayout><BlogHome /></BlogLayout>} />
+            <Route path="/articles" element={<BlogLayout><BlogArticles /></BlogLayout>} />
+            <Route path="/projects" element={<BlogLayout><BlogProjects /></BlogLayout>} />
+            <Route path="/about" element={<BlogLayout><BlogAbout /></BlogLayout>} />
+            <Route path="/article/:id" element={<BlogLayout><BlogArticleDetail /></BlogLayout>} />
+
+            {/* Admin Routes */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/admin" element={<ProtectedRoute><AdminLayout><Dashboard /></AdminLayout></ProtectedRoute>} />
+            <Route path="/admin/inventory" element={<ProtectedRoute><AdminLayout><Inventory /></AdminLayout></ProtectedRoute>} />
+            <Route path="/admin/contacts" element={<ProtectedRoute><AdminLayout><ContactManagement /></AdminLayout></ProtectedRoute>} />
+            <Route path="/admin/content" element={<ProtectedRoute><AdminLayout><ContentManagement /></AdminLayout></ProtectedRoute>} />
+
+            {/* Catch all */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </div>
+      </SiteModeContext.Provider>
+    );
+  }
 
   return (
-    <>
+    <SiteModeContext.Provider value={siteMode}>
       <ScrollToTop />
       <div className="flex flex-col min-h-screen">
         <Routes>
@@ -54,7 +107,7 @@ const App: React.FC = () => {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
-    </>
+    </SiteModeContext.Provider>
   );
 };
 

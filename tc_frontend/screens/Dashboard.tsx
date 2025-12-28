@@ -3,6 +3,8 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getDashboardStats, getGeoStats, getTrendStats, DashboardStats } from '../api/dashboard';
 import { getUnreadCount } from '../api/inquiry';
+import { getSystemConfig, updateSiteMode, ContentItem } from '../api/content';
+import { Switch } from '../components/Switch';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
@@ -16,12 +18,41 @@ const Dashboard: React.FC = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [geoData, setGeoData] = useState<any[]>([]);
   const [trendData, setTrendData] = useState<any[]>([]);
+  const [siteConfig, setSiteConfig] = useState<ContentItem | null>(null);
+  const [isBlogMode, setIsBlogMode] = useState(false);
 
   useEffect(() => {
     fetchStats();
     fetchUnread();
     fetchCharts();
+    fetchSiteConfig();
   }, []);
+
+  const fetchSiteConfig = async () => {
+    try {
+      const items = await getSystemConfig();
+      const config = items.find((item: ContentItem) => item.title === 'site_mode');
+      if (config) {
+        setSiteConfig(config);
+        setIsBlogMode(config.description === 'blog');
+      }
+    } catch (error) {
+      console.error("Failed to fetch site config", error);
+    }
+  };
+
+  const handleModeToggle = async (checked: boolean) => {
+    if (!siteConfig) return;
+    const newMode = checked ? 'blog' : 'default';
+    try {
+      await updateSiteMode(siteConfig, newMode);
+      setIsBlogMode(checked);
+      // Refresh to apply changes globally
+      window.location.reload();
+    } catch (error) {
+      console.error("Failed to update site mode", error);
+    }
+  };
 
   const fetchStats = async () => {
     try {
@@ -88,6 +119,21 @@ const Dashboard: React.FC = () => {
             </button>
           </div>
         </div>
+
+        {/* Site Mode Switch */}
+        {siteConfig && (
+          <div className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-gray-100 dark:border-zinc-800 shadow-sm flex items-center justify-between">
+              <div>
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white">网站模式</h3>
+                  <p className="text-gray-500 text-sm">切换“企业官网”与“个人博客”模式</p>
+              </div>
+              <div className="flex items-center gap-3">
+                  <span className={`text-sm font-medium ${!isBlogMode ? 'text-blue-600' : 'text-gray-400'}`}>企业官网</span>
+                  <Switch checked={isBlogMode} onChange={handleModeToggle} />
+                  <span className={`text-sm font-medium ${isBlogMode ? 'text-blue-600' : 'text-gray-400'}`}>个人博客</span>
+              </div>
+          </div>
+        )}
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

@@ -31,6 +31,14 @@ export const updateContent = (data: Partial<ContentItem>) => {
   return request.post<any, boolean>('/content', data);
 };
 
+export const getSystemConfig = async () => {
+    return getContentBySection('system_config');
+};
+
+export const updateSiteMode = async (item: ContentItem, mode: 'default' | 'blog') => {
+    return updateContent({ ...item, description: mode });
+};
+
 export const getCases = (params: any) => {
   return request.get<any, { records: CustomerCase[], total: number }>('/cases', { params });
 };
